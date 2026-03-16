@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Download, GraduationCap, RotateCcw, User, BookOpen, Briefcase, ZoomIn, Loader2, RefreshCcw } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Download, GraduationCap, User, BookOpen, Briefcase, ZoomIn, Loader2, RefreshCcw } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 const reportTypes = [
@@ -13,15 +13,27 @@ function App() {
   const printRef = useRef();
   const [zoom, setZoom] = useState(0.85);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [formData, setFormData] = useState({
-    type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: ''
+  
+  // Initialize state from LocalStorage or empty strings
+  const [formData, setFormData] = useState(() => {
+    const savedData = localStorage.getItem('diu_cover_gen_data');
+    return savedData ? JSON.parse(savedData) : {
+      type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: ''
+    };
   });
+
+  // Save to LocalStorage whenever formData changes
+  useEffect(() => {
+    localStorage.setItem('diu_cover_gen_data', JSON.stringify(formData));
+  }, [formData]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
   
   const handleReset = () => { 
     if(window.confirm("This will clear all fields. Are you sure?")) {
-      setFormData({ type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' }); 
+      const resetData = { type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' };
+      setFormData(resetData);
+      localStorage.removeItem('diu_cover_gen_data');
     }
   };
 
@@ -46,7 +58,6 @@ function App() {
   };
 
   const currentType = reportTypes.find(t => t.id === formData.type);
-
   const cardStyle = { backgroundColor: '#ffffff', borderRadius: '20px', padding: '24px', marginBottom: '20px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', border: '1px solid #e2e8f0', boxSizing: 'border-box' };
   
   return (
@@ -54,21 +65,13 @@ function App() {
       <style>{`
         .sidebar-hide-scroll::-webkit-scrollbar { display: none; }
         .sidebar-hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .input-field { 
-          width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; 
-          background-color: #f8fafc; font-size: 14px; outline: none; color: #1e293b; 
-          box-sizing: border-box; transition: all 0.2s ease; 
-        }
+        .input-field { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 14px; outline: none; color: #1e293b; box-sizing: border-box; transition: all 0.2s ease; }
         .input-field:hover, .input-field:focus { border-color: #004184; background-color: #fff; }
         .input-field:focus { box-shadow: 0 0 0 3px rgba(0, 65, 132, 0.1); }
-
         .cat-btn { transition: all 0.2s ease; cursor: pointer; border: none; }
         .cat-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
         .gen-btn { transition: all 0.3s ease; cursor: pointer; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .gen-btn:hover:not(:disabled) { background-color: #003366 !important; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 65, 132, 0.3) !important; }
-        
         .reset-btn { transition: all 0.2s ease; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
         .reset-btn:hover { background-color: #fca5a5 !important; transform: translateY(-2px); }
       `}</style>
@@ -121,7 +124,6 @@ function App() {
             </div>
           </div>
 
-          {/* ACTION BUTTONS SIDE-BY-SIDE */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '40px' }}>
             <button onClick={generatePDF} disabled={isGenerating} className="gen-btn" style={{ flex: 3, backgroundColor: isGenerating ? '#64748b' : '#004184', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '15px', boxShadow: '0 20px 25px -5px rgba(0, 65, 132, 0.2)' }}>
               {isGenerating ? <><Loader2 size={20} className="animate-spin" /> Generating...</> : <><Download size={18} /> Generate PDF</>}
@@ -131,8 +133,9 @@ function App() {
             </button>
           </div>
 
+          {/* UPDATED COPYRIGHT FOOTER */}
           <div style={{ marginTop: 'auto', textAlign: 'center', padding: '20px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '12px', fontWeight: 'bold' }}>
-            Developed by Md Nadim Mahmud 2026
+            © 2026 Md Nadim Mahmud. All rights reserved.
           </div>
         </div>
 
@@ -146,10 +149,7 @@ function App() {
           <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', transition: 'transform 0.1s ease-out' }}>
             <div ref={printRef} style={{ width: '210mm', height: '297mm', padding: '20mm', backgroundColor: '#ffffff', color: '#000000', fontFamily: "'Times New Roman', serif", display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}><img src="/diu-logo.png" alt="DIU" style={{ width: '160px', height: 'auto' }} /></div>
-              
-              {/* HEADING FORCED TO SOLID BLACK */}
               <h1 style={{ textAlign: 'center', fontSize: '24px', fontWeight: 'bold', marginBottom: '25px', color: '#000000' }}>{currentType.name}</h1>
-              
               <table style={{ width: '100%', borderCollapse: 'collapse', border: '2.3px solid black', fontSize: '11px', marginBottom: '35px', color: '#000000' }}>
                 <thead>
                   <tr><th colSpan="7" style={{ border: '2.3px solid black', textAlign: 'center', fontWeight: 'bold', fontSize: '12px' }}>ONLY FOR COURSE TEACHER</th></tr>
