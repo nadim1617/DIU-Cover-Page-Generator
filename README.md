@@ -1,17 +1,24 @@
-# React + Vite
+# 🎓 DIU CoverGen
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A high-performance, mobile-responsive **Cover Page Generator** specifically designed for **Daffodil International University (DIU)** students.
 
-Currently, two official plugins are available:
+## 🚀 Live Demo
+**https://diu-covergen.vercel.app/**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Key Features
+* **Smart Forms:** Pre-configured templates for Theory Assignments, Lab Reports, and Lab Finals.
+* **Auto-Save (LocalStorage):** Remembers your Name, ID, Batch, and Section so you only type them once.
+* **High-Quality PDF Merging:** Optionally upload your assignment PDF to merge it with the cover page into a single file with **zero quality loss**.
+* **Dynamic Font Scaling:** Intelligently shrinks text if you enter long names or course titles to ensure the layout always fits on a single A4 page.
+* **Mobile Optimized:** Specifically engineered to prevent blank second pages on mobile browsers.
+* **Top Quality Export:** Uses high-resolution canvas scaling (4x) for crisp, professional printing.
 
-## React Compiler
+## 🛠️ Technology Stack
+* **React + Vite**
+* **Tailwind CSS**
+* **Lucide React** (Icons)
+* **html2pdf.js** (PDF Generation)
+* **pdf-lib** (High-fidelity Merging)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-"# DIU-Cover-Page-Generator" 
+## 📜 License
+© 2026 Md Nadim Mahmud. All rights reserved.
