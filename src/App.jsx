@@ -135,7 +135,7 @@ function App() {
 
           {/* UPDATED COPYRIGHT FOOTER */}
           <div style={{ marginTop: 'auto', textAlign: 'center', padding: '20px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '12px', fontWeight: 'bold' }}>
-            © 2026 Md Nadim Mahmud. All rights reserved.
+            © 2026 Nadim Mahmud. All rights reserved.
           </div>
         </div>
 
