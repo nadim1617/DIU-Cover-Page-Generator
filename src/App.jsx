@@ -55,35 +55,35 @@ function App() {
     
     setIsGenerating(true);
     const element = printRef.current;
-    
-    // High Quality Options (Scale 4 for sharp text)
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
     const opt = {
       margin: 0,
       filename: `temp_cover.pdf`,
       image: { type: 'jpeg', quality: 1.0 },
-      html2canvas: { scale: 4, useCORS: true, backgroundColor: '#ffffff', logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: false } // No compression for top quality
+      html2canvas: { 
+        scale: 4, 
+        useCORS: true, 
+        backgroundColor: '#ffffff',
+        y: isMobile ? 1 : 0 
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: false }
     };
 
     try {
-      // 1. Create the Cover Page as a Blob
       const coverBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
 
       if (assignmentFile) {
-        // 2. High Quality Merge Logic
         const coverPdfDoc = await PDFDocument.load(await coverBlob.arrayBuffer());
         const mainPdfDoc = await PDFDocument.load(await assignmentFile.arrayBuffer());
         const mergedPdf = await PDFDocument.create();
         
-        // Copy the Cover (1st page)
         const [coverPage] = await mergedPdf.copyPages(coverPdfDoc, [0]);
         mergedPdf.addPage(coverPage);
         
-        // Copy all pages from assignment file
         const mainPages = await mergedPdf.copyPages(mainPdfDoc, mainPdfDoc.getPageIndices());
         mainPages.forEach((page) => mergedPdf.addPage(page));
         
-        // Save without compressing bytes
         const mergedPdfBytes = await mergedPdf.save();
         const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
         const link = document.createElement('a');
@@ -91,15 +91,14 @@ function App() {
         link.download = `DIU_Assignment_${formData.studentId}.pdf`;
         link.click();
       } else {
-        // 3. Regular Cover Download
         const link = document.createElement('a');
         link.href = URL.createObjectURL(coverBlob);
         link.download = `DIU_Cover_${formData.studentId}.pdf`;
         link.click();
       }
     } catch (error) {
-      console.error("PDF Error:", error);
-      alert("Error generating merged PDF. Make sure the uploaded file is not corrupted.");
+      console.error(error);
+      alert("Error generating PDF.");
     } finally {
       setIsGenerating(false);
     }
@@ -122,7 +121,7 @@ function App() {
         .gen-btn:hover:not(:disabled) { background-color: #003366 !important; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 65, 132, 0.3) !important; }
         .reset-btn { transition: all 0.2s ease; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
         .reset-btn:hover { background-color: #fca5a5 !important; transform: translateY(-2px); }
-        .file-upload-label { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s; display: block; background: #fff; margin-bottom: 5px; }
+        .file-upload-label { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s; display: block; background: #fff; }
         .file-upload-label:hover { border-color: #004184; background: #f0f7ff; }
       `}</style>
       
@@ -142,7 +141,6 @@ function App() {
             ))}
           </div>
 
-          {/* STUDENT IDENTITY */}
           <div style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><User size={16} /> Student Identity</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -155,7 +153,6 @@ function App() {
             </div>
           </div>
 
-          {/* ACADEMIC CONTEXT */}
           <div style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><BookOpen size={16} /> Academic Context</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -167,7 +164,6 @@ function App() {
             </div>
           </div>
 
-          {/* FACULTY DETAILS */}
           <div style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><Briefcase size={16} /> Faculty Details</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -177,21 +173,18 @@ function App() {
             </div>
           </div>
 
-          {/* MERGE FILE MODULE */}
           <div style={cardStyle}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#39b54a', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><FilePlus size={16} /> Merge Assignment (Optional)</div>
-             <input type="file" id="pdf-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
-             <label htmlFor="pdf-upload" className="file-upload-label">
-               {assignmentFile ? (
-                 <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={18} style={{ display: 'inline', marginRight: '5px' }} /> {assignmentFile.name}</div>
-               ) : (
-                 <div style={{ color: '#64748b' }}>Select Assignment PDF to Merge</div>
-               )}
+             <input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
+             <label htmlFor="assignment-upload" className="file-upload-label">
+                {assignmentFile ? (
+                  <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name} Selected</div>
+                ) : (
+                  <div style={{ color: '#64748b' }}>Click to upload assignment PDF to merge</div>
+                )}
              </label>
-             {assignmentFile && <p style={{ fontSize: '10px', color: '#94a3b8', textAlign: 'center' }}>Original quality will be preserved</p>}
           </div>
 
-          {/* ACTIONS */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '40px' }}>
             <button onClick={generatePDF} disabled={isGenerating} className="gen-btn" style={{ flex: 3, backgroundColor: isGenerating ? '#64748b' : '#004184', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '15px', boxShadow: '0 20px 25px -5px rgba(0, 65, 132, 0.2)' }}>
               {isGenerating ? <><Loader2 size={20} className="animate-spin" /> Processing...</> : (
@@ -208,7 +201,6 @@ function App() {
           </div>
         </div>
 
-        {/* PREVIEW PANEL */}
         <div style={{ flex: 1, backgroundColor: '#cbd5e1', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto' }}>
           <div style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '10px 20px', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 5 }}>
             <ZoomIn size={18} color="#004184" />
@@ -217,7 +209,7 @@ function App() {
           </div>
 
           <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', transition: 'transform 0.1s ease-out' }}>
-            <div ref={printRef} style={{ width: '210mm', height: '297mm', padding: '20mm', backgroundColor: '#ffffff', color: '#000000', fontFamily: "'Times New Roman', serif", display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
+            <div ref={printRef} style={{ width: '210mm', height: '296.8mm', padding: '20mm', backgroundColor: '#ffffff', color: '#000000', fontFamily: "'Times New Roman', serif", display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}><img src="/diu-logo.png" alt="DIU" style={{ width: '160px', height: 'auto' }} /></div>
               <h1 style={{ textAlign: 'center', fontSize: '24px', fontWeight: 'bold', marginBottom: '25px', color: '#000000' }}>{currentType.name}</h1>
               <table style={{ width: '100%', borderCollapse: 'collapse', border: '2.3px solid black', fontSize: '11px', marginBottom: '35px', color: '#000000' }}>
