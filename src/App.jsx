@@ -12,7 +12,9 @@ const reportTypes = [
 
 function App() {
   const printRef = useRef();
+  const infoSectionRef = useRef(); // New ref for the dynamic font section
   const [zoom, setZoom] = useState(0.85);
+  const [dynamicFontSize, setDynamicFontSize] = useState(19); // Start at your stable 19px
   const [isGenerating, setIsGenerating] = useState(false);
   const [assignmentFile, setAssignmentFile] = useState(null);
   
@@ -23,9 +25,20 @@ function App() {
     };
   });
 
+  // EFFECT: Auto-adjust font size if content overflows
   useEffect(() => {
+    if (infoSectionRef.current) {
+      const containerHeight = 350; // Approximated height available on the A4 page for this section
+      const currentHeight = infoSectionRef.current.scrollHeight;
+      
+      if (currentHeight > containerHeight && dynamicFontSize > 14) {
+        setDynamicFontSize(prev => prev - 0.5);
+      } else if (currentHeight < containerHeight - 50 && dynamicFontSize < 19) {
+        setDynamicFontSize(prev => prev + 0.5);
+      }
+    }
     localStorage.setItem('diu_cover_gen_data', JSON.stringify(formData));
-  }, [formData]);
+  }, [formData, dynamicFontSize]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -44,6 +57,7 @@ function App() {
       const resetData = { type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' };
       setFormData(resetData);
       setAssignmentFile(null);
+      setDynamicFontSize(19);
       localStorage.removeItem('diu_cover_gen_data');
     }
   };
@@ -51,7 +65,7 @@ function App() {
   const generatePDF = async () => {
     const requiredFields = Object.keys(formData);
     const emptyFields = requiredFields.filter(field => !formData[field].trim());
-    if (emptyFields.length > 0) { alert("Please fill in all fields before generating the PDF."); return; }
+    if (emptyFields.length > 0) { alert("Please fill in all fields."); return; }
     
     setIsGenerating(true);
     const element = printRef.current;
@@ -77,13 +91,10 @@ function App() {
         const coverPdfDoc = await PDFDocument.load(await coverBlob.arrayBuffer());
         const mainPdfDoc = await PDFDocument.load(await assignmentFile.arrayBuffer());
         const mergedPdf = await PDFDocument.create();
-        
         const [coverPage] = await mergedPdf.copyPages(coverPdfDoc, [0]);
         mergedPdf.addPage(coverPage);
-        
         const mainPages = await mergedPdf.copyPages(mainPdfDoc, mainPdfDoc.getPageIndices());
         mainPages.forEach((page) => mergedPdf.addPage(page));
-        
         const mergedPdfBytes = await mergedPdf.save();
         const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
         const link = document.createElement('a');
@@ -114,7 +125,6 @@ function App() {
         .sidebar-hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
         .input-field { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 14px; outline: none; color: #1e293b; box-sizing: border-box; transition: all 0.2s ease; }
         .input-field:hover, .input-field:focus { border-color: #004184; background-color: #fff; }
-        .input-field:focus { box-shadow: 0 0 0 3px rgba(0, 65, 132, 0.1); }
         .cat-btn { transition: all 0.2s ease; cursor: pointer; border: none; }
         .cat-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .gen-btn { transition: all 0.3s ease; cursor: pointer; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -141,71 +151,28 @@ function App() {
             ))}
           </div>
 
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><User size={16} /> Student Identity</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Full Student Name *" className="input-field" />
-              <input name="studentId" value={formData.studentId} onChange={handleChange} placeholder="Student ID *" className="input-field" />
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{width: '50%'}}><input name="batch" value={formData.batch} onChange={handleChange} placeholder="Batch *" className="input-field" /></div>
-                <div style={{width: '50%'}}><input name="section" value={formData.section} onChange={handleChange} placeholder="Section *" className="input-field" /></div>
-              </div>
-            </div>
-          </div>
-
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><BookOpen size={16} /> Academic Context</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input name="semester" value={formData.semester} onChange={handleChange} placeholder="Semester (e.g. Fall 2025) *" className="input-field" />
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{width: '30%'}}><input name="courseCode" value={formData.courseCode} onChange={handleChange} placeholder="Code *" className="input-field" /></div>
-                <div style={{width: '70%'}}><input name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Course Title *" className="input-field" /></div>
-              </div>
-            </div>
-          </div>
-
-          <div style={cardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><Briefcase size={16} /> Faculty Details</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Course Teacher Name *" className="input-field" />
-              <input name="designation" value={formData.designation} onChange={handleChange} placeholder="Designation *" className="input-field" />
-              <input type="text" name="submissionDate" value={formData.submissionDate} onChange={handleChange} placeholder="Submission Date (e.g. 21st Aug, 2025) *" className="input-field" />
-            </div>
-          </div>
-
-          <div style={cardStyle}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#39b54a', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><FilePlus size={16} /> Merge Assignment (Optional)</div>
-             <input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
-             <label htmlFor="assignment-upload" className="file-upload-label">
-                {assignmentFile ? (
-                  <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name} Selected</div>
-                ) : (
-                  <div style={{ color: '#64748b' }}>Click to upload assignment PDF to merge</div>
-                )}
-             </label>
-          </div>
+          {/* INPUT CARDS (Same as before) */}
+          <div style={cardStyle}><div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><User size={16} /> Student Identity</div><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}><input name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Full Student Name *" className="input-field" /><input name="studentId" value={formData.studentId} onChange={handleChange} placeholder="Student ID *" className="input-field" /><div style={{ display: 'flex', gap: '12px' }}><div style={{width: '50%'}}><input name="batch" value={formData.batch} onChange={handleChange} placeholder="Batch *" className="input-field" /></div><div style={{width: '50%'}}><input name="section" value={formData.section} onChange={handleChange} placeholder="Section *" className="input-field" /></div></div></div></div>
+          <div style={cardStyle}><div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><BookOpen size={16} /> Academic Context</div><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}><input name="semester" value={formData.semester} onChange={handleChange} placeholder="Semester (e.g. Fall 2025) *" className="input-field" /><div style={{ display: 'flex', gap: '12px' }}><div style={{width: '30%'}}><input name="courseCode" value={formData.courseCode} onChange={handleChange} placeholder="Code *" className="input-field" /></div><div style={{width: '70%'}}><input name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Course Title *" className="input-field" /></div></div></div></div>
+          <div style={cardStyle}><div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><Briefcase size={16} /> Faculty Details</div><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}><input name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Course Teacher Name *" className="input-field" /><input name="designation" value={formData.designation} onChange={handleChange} placeholder="Designation *" className="input-field" /><input type="text" name="submissionDate" value={formData.submissionDate} onChange={handleChange} placeholder="Submission Date (e.g. 21st Aug, 2025) *" className="input-field" /></div></div>
+          
+          <div style={cardStyle}><div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#39b54a', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><FilePlus size={16} /> Merge Assignment (Optional)</div><input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} /><label htmlFor="assignment-upload" className="file-upload-label">{assignmentFile ? <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name} Selected</div> : <div style={{ color: '#64748b' }}>Click to upload assignment PDF to merge</div>}</label></div>
 
           <div style={{ display: 'flex', gap: '12px', marginBottom: '40px' }}>
-            <button onClick={generatePDF} disabled={isGenerating} className="gen-btn" style={{ flex: 3, backgroundColor: isGenerating ? '#64748b' : '#004184', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '15px', boxShadow: '0 20px 25px -5px rgba(0, 65, 132, 0.2)' }}>
-              {isGenerating ? <><Loader2 size={20} className="animate-spin" /> Processing...</> : (
-                <>{assignmentFile ? <><FileCheck size={18} /> Merge & Download</> : <><Download size={18} /> Generate PDF</>}</>
-              )}
+            <button onClick={generatePDF} disabled={isGenerating} className="gen-btn" style={{ flex: 3, backgroundColor: isGenerating ? '#64748b' : '#004184', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '15px' }}>
+              {isGenerating ? <><Loader2 size={20} className="animate-spin" /> Processing...</> : <>{assignmentFile ? <><FileCheck size={18} /> Merge & Download</> : <><Download size={18} /> Generate PDF</>}</>}
             </button>
-            <button onClick={handleReset} className="reset-btn" style={{ flex: 1, backgroundColor: '#fecaca', color: '#991b1b', padding: '16px', borderRadius: '16px', fontSize: '14px' }}>
-              <RefreshCcw size={16} /> Reset
-            </button>
+            <button onClick={handleReset} className="reset-btn" style={{ flex: 1, backgroundColor: '#fecaca', color: '#991b1b', padding: '16px', borderRadius: '16px', fontSize: '14px' }}><RefreshCcw size={16} /> Reset</button>
           </div>
 
-          <div style={{ marginTop: 'auto', textAlign: 'center', padding: '20px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '12px', fontWeight: 'bold' }}>
-            © 2026 Md Nadim Mahmud. All rights reserved.
-          </div>
+          <div style={{ marginTop: 'auto', textAlign: 'center', padding: '20px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '12px', fontWeight: 'bold' }}>© 2026 Md Nadim Mahmud. All rights reserved.</div>
         </div>
 
         <div style={{ flex: 1, backgroundColor: '#cbd5e1', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto' }}>
-          <div style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '10px 20px', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 5 }}>
+          <div style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '10px 20px', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
             <ZoomIn size={18} color="#004184" />
             <input type="range" min="0.5" max="1.5" step="0.05" value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} style={{ cursor: 'pointer', width: '150px' }} />
-            <span style={{ fontSize: '12px', fontWeight: 'bold', minWidth: '40px' }}>{Math.round(zoom * 100)}%</span>
+            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{Math.round(zoom * 100)}%</span>
           </div>
 
           <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', transition: 'transform 0.1s ease-out' }}>
@@ -215,38 +182,28 @@ function App() {
               <table style={{ width: '100%', borderCollapse: 'collapse', border: '2.3px solid black', fontSize: '11px', marginBottom: '35px', color: '#000000' }}>
                 <thead>
                   <tr><th colSpan="7" style={{ border: '2.3px solid black', textAlign: 'center', fontWeight: 'bold', fontSize: '12px' }}>ONLY FOR COURSE TEACHER</th></tr>
-                  <tr style={{ textAlign: 'center' }}>
-                    <th style={{ border: '2.3px solid black', width: '35%' }}></th>
-                    <th style={{ border: '2.3px solid black' }}>Needs Improvement</th>
-                    <th style={{ border: '2.3px solid black' }}>Developing</th>
-                    <th style={{ border: '2.3px solid black' }}>Sufficient</th>
-                    <th style={{ border: '2.3px solid black' }}>Above Average</th>
-                    <th style={{ border: '2.3px solid black', width: '60px' }}>Total Mark</th>
-                  </tr>
+                  <tr style={{ textAlign: 'center' }}><th style={{ border: '2.3px solid black', width: '35%' }}></th><th style={{ border: '2.3px solid black' }}>Needs Improvement</th><th style={{ border: '2.3px solid black' }}>Developing</th><th style={{ border: '2.3px solid black' }}>Sufficient</th><th style={{ border: '2.3px solid black' }}>Above Average</th><th style={{ border: '2.3px solid black', width: '60px' }}>Total Mark</th></tr>
                   <tr style={{ height: '30px' }}><th style={{ border: '2.3px solid black', textAlign: 'left', paddingLeft: '8px', fontWeight: 'bold' }}>ALLOCATE MARK & PERCENTAGE</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>25%</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>50%</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>75%</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>100%</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>{currentType.total}</th></tr>
                 </thead>
                 <tbody>
                   {currentType.criteria.map((item, idx) => (
-                    <tr key={idx} style={{ height: '35px' }}>
-                      <td style={{ border: '2.3px solid black', paddingLeft: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{paddingTop: '6px'}}>{item.name}</span>
-                        <span style={{ borderLeft: '2px solid black', width: '35px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.mark}</span>
-                      </td>
-                      <td style={{ border: '2.3px solid black' }}></td><td style={{ border: '2.3px solid black' }}></td><td style={{ border: '2.3px solid black' }}></td><td style={{ border: '2.3px solid black' }}></td><td style={{ border: '2.3px solid black' }}></td>
-                    </tr>
+                    <tr key={idx} style={{ height: '35px' }}><td style={{ border: '2.3px solid black', paddingLeft: '8px', fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span>{item.name}</span><span style={{ borderLeft: '2px solid black', width: '35px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.mark}</span></td><td style={{ border: '2.3px solid black' }}></td><td style={{ border: '2.3px solid black' }}></td><td style={{ border: '2.3px solid black' }}></td><td style={{ border: '2.3px solid black' }}></td><td style={{ border: '2.3px solid black' }}></td></tr>
                   ))}
                   <tr style={{ fontWeight: 'bold' }}><td colSpan="5" style={{ border: '2.3px solid black', textAlign: 'right', paddingRight: '12px', height: '30px' }}>TOTAL OBTAINED MARK</td><td style={{ border: '2.3px solid black' }}></td></tr>
                   <tr style={{ height: '55px' }}><td style={{ border: '2.3px solid black', padding: '8px', fontWeight: 'bold', verticalAlign: 'top' }}>COMMENTS</td><td colSpan="5" style={{ border: '2.3px solid black' }}></td></tr>
                 </tbody>
               </table>
-              <div style={{ width: '100%', fontSize: '19px', lineHeight: '2.2', fontWeight: 'bold', paddingLeft: '10px', color: '#000000' }}>
-                <p style={{ fontSize: '22px', marginBottom: '8px' }}>Semester: {formData.semester || '..........'}</p>
+
+              {/* DYNAMIC FONT SECTION */}
+              <div ref={infoSectionRef} style={{ width: '100%', fontSize: `${dynamicFontSize}px`, lineHeight: '1.8', fontWeight: 'bold', paddingLeft: '10px', color: '#000000' }}>
+                <p style={{ fontSize: `${dynamicFontSize + 3}px`, marginBottom: '5px' }}>Semester: {formData.semester || '..........'}</p>
                 <p>Student Name: {formData.studentName || '..........................................................'}</p>
                 <p>Student ID: {formData.studentId || '..........................................................'}</p>
                 <div style={{ display: 'flex', width: '100%' }}><div style={{ width: '45%' }}>Batch: {formData.batch || '.....'}</div><div>Section: {formData.section || '.....'}</div></div>
                 <div style={{ display: 'flex', width: '100%' }}><div style={{ width: '45%' }}>Course Code: {formData.courseCode || '..........'}</div><div>Course Name: {formData.courseName || '...................................'}</div></div>
-                <div style={{ marginTop: '15px' }}><p>Course Teacher Name: {formData.teacherName || '................................................'}</p><p>Designation: {formData.designation || '................................................'}</p><p>Submission Date: {formData.submissionDate || '....................'}</p></div>
+                <div style={{ marginTop: '10px' }}><p>Course Teacher Name: {formData.teacherName || '................................................'}</p><p>Designation: {formData.designation || '................................................'}</p><p>Submission Date: {formData.submissionDate || '....................'}</p></div>
               </div>
+
             </div>
           </div>
         </div>
