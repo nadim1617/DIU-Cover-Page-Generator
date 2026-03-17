@@ -12,9 +12,9 @@ const reportTypes = [
 
 function App() {
   const printRef = useRef();
-  const infoSectionRef = useRef(); // New ref for the dynamic font section
+  const infoSectionRef = useRef();
   const [zoom, setZoom] = useState(0.85);
-  const [dynamicFontSize, setDynamicFontSize] = useState(19); // Start at your stable 19px
+  const [dynamicFontSize, setDynamicFontSize] = useState(19);
   const [isGenerating, setIsGenerating] = useState(false);
   const [assignmentFile, setAssignmentFile] = useState(null);
   
@@ -25,10 +25,10 @@ function App() {
     };
   });
 
-  // EFFECT: Auto-adjust font size if content overflows
+  // Handle auto-font scaling and local storage
   useEffect(() => {
     if (infoSectionRef.current) {
-      const containerHeight = 350; // Approximated height available on the A4 page for this section
+      const containerHeight = 350; 
       const currentHeight = infoSectionRef.current.scrollHeight;
       
       if (currentHeight > containerHeight && dynamicFontSize > 14) {
@@ -54,8 +54,7 @@ function App() {
   
   const handleReset = () => { 
     if(window.confirm("This will clear all fields. Are you sure?")) {
-      const resetData = { type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' };
-      setFormData(resetData);
+      setFormData({ type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' });
       setAssignmentFile(null);
       setDynamicFontSize(19);
       localStorage.removeItem('diu_cover_gen_data');
@@ -75,12 +74,7 @@ function App() {
       margin: 0,
       filename: `temp_cover.pdf`,
       image: { type: 'jpeg', quality: 1.0 },
-      html2canvas: { 
-        scale: 4, 
-        useCORS: true, 
-        backgroundColor: '#ffffff',
-        y: isMobile ? 1 : 0 
-      },
+      html2canvas: { scale: 4, useCORS: true, backgroundColor: '#ffffff', y: isMobile ? 1 : 0 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: false }
     };
 
@@ -123,16 +117,22 @@ function App() {
       <style>{`
         .sidebar-hide-scroll::-webkit-scrollbar { display: none; }
         .sidebar-hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        @media (max-width: 768px) {
+          .main-container { flex-direction: column !important; overflow-y: auto !important; }
+          .sidebar-container { width: 100% !important; min-width: 100% !important; height: auto !important; overflow: visible !important; }
+          .preview-panel { width: 100% !important; height: auto !important; padding: 20px 10px !important; overflow: visible !important; }
+          
+          /* Visible scrollbar for mobile only */
+          .main-container::-webkit-scrollbar { width: 6px; display: block !important; }
+          .main-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        }
+
         .input-field { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 14px; outline: none; color: #1e293b; box-sizing: border-box; transition: all 0.2s ease; }
         .input-field:hover, .input-field:focus { border-color: #004184; background-color: #fff; }
         .cat-btn { transition: all 0.2s ease; cursor: pointer; border: none; }
-        .cat-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .gen-btn { transition: all 0.3s ease; cursor: pointer; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .gen-btn:hover:not(:disabled) { background-color: #003366 !important; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 65, 132, 0.3) !important; }
-        .reset-btn { transition: all 0.2s ease; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
-        .reset-btn:hover { background-color: #fca5a5 !important; transform: translateY(-2px); }
         .file-upload-label { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s; display: block; background: #fff; }
-        .file-upload-label:hover { border-color: #004184; background: #f0f7ff; }
       `}</style>
       
       <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', zIndex: 50, width: '100%', boxSizing: 'border-box' }}>
@@ -142,8 +142,8 @@ function App() {
         </div>
       </header>
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', width: '100%' }}>
-        <div className="sidebar-hide-scroll" style={{ width: '30%', minWidth: '400px', height: '100%', overflowY: 'auto', padding: '32px', borderRight: '1px solid #e2e8f0', backgroundColor: '#f8fafc', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+      <div className="main-container" style={{ flex: 1, display: 'flex', overflow: 'hidden', width: '100%' }}>
+        <div className="sidebar-container sidebar-hide-scroll" style={{ width: '30%', minWidth: '400px', height: '100%', overflowY: 'auto', padding: '32px', borderRight: '1px solid #e2e8f0', backgroundColor: '#f8fafc', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '32px' }}>
             {reportTypes.map((type) => (
@@ -151,12 +151,45 @@ function App() {
             ))}
           </div>
 
-          {/* INPUT CARDS (Same as before) */}
-          <div style={cardStyle}><div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><User size={16} /> Student Identity</div><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}><input name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Full Student Name *" className="input-field" /><input name="studentId" value={formData.studentId} onChange={handleChange} placeholder="Student ID *" className="input-field" /><div style={{ display: 'flex', gap: '12px' }}><div style={{width: '50%'}}><input name="batch" value={formData.batch} onChange={handleChange} placeholder="Batch *" className="input-field" /></div><div style={{width: '50%'}}><input name="section" value={formData.section} onChange={handleChange} placeholder="Section *" className="input-field" /></div></div></div></div>
-          <div style={cardStyle}><div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><BookOpen size={16} /> Academic Context</div><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}><input name="semester" value={formData.semester} onChange={handleChange} placeholder="Semester (e.g. Fall 2025) *" className="input-field" /><div style={{ display: 'flex', gap: '12px' }}><div style={{width: '30%'}}><input name="courseCode" value={formData.courseCode} onChange={handleChange} placeholder="Code *" className="input-field" /></div><div style={{width: '70%'}}><input name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Course Title *" className="input-field" /></div></div></div></div>
-          <div style={cardStyle}><div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><Briefcase size={16} /> Faculty Details</div><div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}><input name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Course Teacher Name *" className="input-field" /><input name="designation" value={formData.designation} onChange={handleChange} placeholder="Designation *" className="input-field" /><input type="text" name="submissionDate" value={formData.submissionDate} onChange={handleChange} placeholder="Submission Date (e.g. 21st Aug, 2025) *" className="input-field" /></div></div>
-          
-          <div style={cardStyle}><div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#39b54a', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><FilePlus size={16} /> Merge Assignment (Optional)</div><input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} /><label htmlFor="assignment-upload" className="file-upload-label">{assignmentFile ? <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name} Selected</div> : <div style={{ color: '#64748b' }}>Click to upload assignment PDF to merge</div>}</label></div>
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><User size={16} /> Student Identity</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Full Student Name *" className="input-field" />
+              <input name="studentId" value={formData.studentId} onChange={handleChange} placeholder="Student ID *" className="input-field" />
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{width: '50%'}}><input name="batch" value={formData.batch} onChange={handleChange} placeholder="Batch *" className="input-field" /></div>
+                <div style={{width: '50%'}}><input name="section" value={formData.section} onChange={handleChange} placeholder="Section *" className="input-field" /></div>
+              </div>
+            </div>
+          </div>
+
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><BookOpen size={16} /> Academic Context</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input name="semester" value={formData.semester} onChange={handleChange} placeholder="Semester (e.g. Fall 2025) *" className="input-field" />
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{width: '30%'}}><input name="courseCode" value={formData.courseCode} onChange={handleChange} placeholder="Code *" className="input-field" /></div>
+                <div style={{width: '70%'}}><input name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Course Title *" className="input-field" /></div>
+              </div>
+            </div>
+          </div>
+
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><Briefcase size={16} /> Faculty Details</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <input name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Course Teacher Name *" className="input-field" />
+              <input name="designation" value={formData.designation} onChange={handleChange} placeholder="Designation *" className="input-field" />
+              <input type="text" name="submissionDate" value={formData.submissionDate} onChange={handleChange} placeholder="Submission Date (e.g. 21st Aug, 2025) *" className="input-field" />
+            </div>
+          </div>
+
+          <div style={cardStyle}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#39b54a', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><FilePlus size={16} /> Merge Assignment (Optional)</div>
+             <input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
+             <label htmlFor="assignment-upload" className="file-upload-label">
+                {assignmentFile ? <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name} Selected</div> : <div style={{ color: '#64748b' }}>Click to upload assignment PDF to merge</div>}
+             </label>
+          </div>
 
           <div style={{ display: 'flex', gap: '12px', marginBottom: '40px' }}>
             <button onClick={generatePDF} disabled={isGenerating} className="gen-btn" style={{ flex: 3, backgroundColor: isGenerating ? '#64748b' : '#004184', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '15px' }}>
@@ -168,10 +201,10 @@ function App() {
           <div style={{ marginTop: 'auto', textAlign: 'center', padding: '20px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '12px', fontWeight: 'bold' }}>© 2026 Md Nadim Mahmud. All rights reserved.</div>
         </div>
 
-        <div style={{ flex: 1, backgroundColor: '#cbd5e1', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto' }}>
+        <div className="preview-panel" style={{ flex: 1, backgroundColor: '#cbd5e1', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto' }}>
           <div style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '10px 20px', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
             <ZoomIn size={18} color="#004184" />
-            <input type="range" min="0.5" max="1.5" step="0.05" value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} style={{ cursor: 'pointer', width: '150px' }} />
+            <input type="range" min="0.3" max="1.5" step="0.05" value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} style={{ cursor: 'pointer', width: '150px' }} />
             <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{Math.round(zoom * 100)}%</span>
           </div>
 
@@ -194,7 +227,6 @@ function App() {
                 </tbody>
               </table>
 
-              {/* DYNAMIC FONT SECTION */}
               <div ref={infoSectionRef} style={{ width: '100%', fontSize: `${dynamicFontSize}px`, lineHeight: '1.8', fontWeight: 'bold', paddingLeft: '10px', color: '#000000' }}>
                 <p style={{ fontSize: `${dynamicFontSize + 3}px`, marginBottom: '5px' }}>Semester: {formData.semester || '..........'}</p>
                 <p>Student Name: {formData.studentName || '..........................................................'}</p>
@@ -203,7 +235,6 @@ function App() {
                 <div style={{ display: 'flex', width: '100%' }}><div style={{ width: '45%' }}>Course Code: {formData.courseCode || '..........'}</div><div>Course Name: {formData.courseName || '...................................'}</div></div>
                 <div style={{ marginTop: '10px' }}><p>Course Teacher Name: {formData.teacherName || '................................................'}</p><p>Designation: {formData.designation || '................................................'}</p><p>Submission Date: {formData.submissionDate || '....................'}</p></div>
               </div>
-
             </div>
           </div>
         </div>
