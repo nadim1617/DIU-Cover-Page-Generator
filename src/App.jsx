@@ -25,7 +25,10 @@ function App() {
     };
   });
 
-  // Handle auto-font scaling and local storage
+  useEffect(() => {
+    document.title = "DIU CoverGen";
+  }, []);
+
   useEffect(() => {
     if (infoSectionRef.current) {
       const containerHeight = 350; 
@@ -54,7 +57,8 @@ function App() {
   
   const handleReset = () => { 
     if(window.confirm("This will clear all fields. Are you sure?")) {
-      setFormData({ type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' });
+      const resetData = { type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' };
+      setFormData(resetData);
       setAssignmentFile(null);
       setDynamicFontSize(19);
       localStorage.removeItem('diu_cover_gen_data');
@@ -110,7 +114,7 @@ function App() {
   };
 
   const currentType = reportTypes.find(t => t.id === formData.type);
-  const cardStyle = { backgroundColor: '#ffffff', borderRadius: '20px', padding: '24px', marginBottom: '20px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', border: '1px solid #e2e8f0', boxSizing: 'border-box' };
+  const cardStyle = { backgroundColor: '#ffffff', borderRadius: '20px', padding: '24px', marginBottom: '20px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', border: '1px solid #e2e8f0', boxSizing: 'border-box', transition: 'all 0.3s ease' };
   
   return (
     <div style={{ width: '100%', height: '100vh', backgroundColor: '#f1f5f9', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'fixed', top: 0, left: 0 }}>
@@ -122,17 +126,28 @@ function App() {
           .main-container { flex-direction: column !important; overflow-y: auto !important; }
           .sidebar-container { width: 100% !important; min-width: 100% !important; height: auto !important; overflow: visible !important; }
           .preview-panel { width: 100% !important; height: auto !important; padding: 20px 10px !important; overflow: visible !important; }
-          
-          /* Visible scrollbar for mobile only */
           .main-container::-webkit-scrollbar { width: 6px; display: block !important; }
           .main-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         }
 
         .input-field { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 14px; outline: none; color: #1e293b; box-sizing: border-box; transition: all 0.2s ease; }
         .input-field:hover, .input-field:focus { border-color: #004184; background-color: #fff; }
+        .input-field:focus { box-shadow: 0 0 0 3px rgba(0, 65, 132, 0.1); }
+        
+        /* HOVER EFFECT FOR WHOLE CARD */
+        .input-card:hover { transform: translateY(-4px); boxShadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #004184 !important; }
+
         .cat-btn { transition: all 0.2s ease; cursor: pointer; border: none; }
+        .cat-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
         .gen-btn { transition: all 0.3s ease; cursor: pointer; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .gen-btn:hover:not(:disabled) { background-color: #003366 !important; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 65, 132, 0.3) !important; }
+        
+        .reset-btn { transition: all 0.2s ease; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
+        .reset-btn:hover { background-color: #fca5a5 !important; transform: translateY(-2px); }
+        
         .file-upload-label { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s; display: block; background: #fff; }
+        .file-upload-label:hover { border-color: #004184; background: #f0f7ff; }
       `}</style>
       
       <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', zIndex: 50, width: '100%', boxSizing: 'border-box' }}>
@@ -151,7 +166,7 @@ function App() {
             ))}
           </div>
 
-          <div style={cardStyle}>
+          <div className="input-card" style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><User size={16} /> Student Identity</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Full Student Name *" className="input-field" />
@@ -163,18 +178,18 @@ function App() {
             </div>
           </div>
 
-          <div style={cardStyle}>
+          <div className="input-card" style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><BookOpen size={16} /> Academic Context</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input name="semester" value={formData.semester} onChange={handleChange} placeholder="Semester (e.g. Fall 2025) *" className="input-field" />
               <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{width: '30%'}}><input name="courseCode" value={formData.courseCode} onChange={handleChange} placeholder="Code *" className="input-field" /></div>
-                <div style={{width: '70%'}}><input name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Course Title *" className="input-field" /></div>
+                <div style={{width: '40%'}}><input name="courseCode" value={formData.courseCode} onChange={handleChange} placeholder="Course Code *" className="input-field" /></div>
+                <div style={{width: '60%'}}><input name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Course Title *" className="input-field" /></div>
               </div>
             </div>
           </div>
 
-          <div style={cardStyle}>
+          <div className="input-card" style={cardStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#004184', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><Briefcase size={16} /> Faculty Details</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Course Teacher Name *" className="input-field" />
@@ -183,7 +198,7 @@ function App() {
             </div>
           </div>
 
-          <div style={cardStyle}>
+          <div className="input-card" style={cardStyle}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#39b54a', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><FilePlus size={16} /> Merge Assignment (Optional)</div>
              <input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
              <label htmlFor="assignment-upload" className="file-upload-label">
@@ -192,7 +207,7 @@ function App() {
           </div>
 
           <div style={{ display: 'flex', gap: '12px', marginBottom: '40px' }}>
-            <button onClick={generatePDF} disabled={isGenerating} className="gen-btn" style={{ flex: 3, backgroundColor: isGenerating ? '#64748b' : '#004184', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '15px' }}>
+            <button onClick={generatePDF} disabled={isGenerating} className="gen-btn" style={{ flex: 3, backgroundColor: isGenerating ? '#64748b' : '#004184', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '15px', boxShadow: '0 20px 25px -5px rgba(0, 65, 132, 0.2)' }}>
               {isGenerating ? <><Loader2 size={20} className="animate-spin" /> Processing...</> : <>{assignmentFile ? <><FileCheck size={18} /> Merge & Download</> : <><Download size={18} /> Generate PDF</>}</>}
             </button>
             <button onClick={handleReset} className="reset-btn" style={{ flex: 1, backgroundColor: '#fecaca', color: '#991b1b', padding: '16px', borderRadius: '16px', fontSize: '14px' }}><RefreshCcw size={16} /> Reset</button>
