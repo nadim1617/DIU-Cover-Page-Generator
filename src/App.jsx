@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Download, GraduationCap, User, BookOpen, Briefcase, ZoomIn, Loader2, RefreshCcw, FilePlus, FileCheck } from 'lucide-react';
+import { Download, GraduationCap, User, BookOpen, Briefcase, ZoomIn, Loader2, RefreshCcw, FilePlus, FileCheck, MessageSquare, X, Mail, Linkedin, Send } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import { PDFDocument } from 'pdf-lib';
 
@@ -17,6 +17,7 @@ function App() {
   const [dynamicFontSize, setDynamicFontSize] = useState(19);
   const [isGenerating, setIsGenerating] = useState(false);
   const [assignmentFile, setAssignmentFile] = useState(null);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   
   const [formData, setFormData] = useState(() => {
     const savedData = localStorage.getItem('diu_cover_gen_data');
@@ -25,20 +26,14 @@ function App() {
     };
   });
 
-  useEffect(() => {
-    document.title = "DIU CoverGen";
-  }, []);
+  useEffect(() => { document.title = "DIU CoverGen"; }, []);
 
   useEffect(() => {
     if (infoSectionRef.current) {
       const containerHeight = 350; 
       const currentHeight = infoSectionRef.current.scrollHeight;
-      
-      if (currentHeight > containerHeight && dynamicFontSize > 14) {
-        setDynamicFontSize(prev => prev - 0.5);
-      } else if (currentHeight < containerHeight - 50 && dynamicFontSize < 19) {
-        setDynamicFontSize(prev => prev + 0.5);
-      }
+      if (currentHeight > containerHeight && dynamicFontSize > 14) { setDynamicFontSize(prev => prev - 0.5); }
+      else if (currentHeight < containerHeight - 50 && dynamicFontSize < 19) { setDynamicFontSize(prev => prev + 0.5); }
     }
     localStorage.setItem('diu_cover_gen_data', JSON.stringify(formData));
   }, [formData, dynamicFontSize]);
@@ -47,18 +42,13 @@ function App() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === "application/pdf") {
-      setAssignmentFile(file);
-    } else {
-      alert("Please upload a valid PDF file.");
-      e.target.value = null;
-    }
+    if (file && file.type === "application/pdf") { setAssignmentFile(file); }
+    else { alert("Please upload a valid PDF file."); e.target.value = null; }
   };
   
   const handleReset = () => { 
     if(window.confirm("This will clear all fields. Are you sure?")) {
-      const resetData = { type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' };
-      setFormData(resetData);
+      setFormData({ type: 'theory-assignment', studentName: '', studentId: '', batch: '', section: '', courseCode: '', courseName: '', teacherName: '', designation: '', semester: '', submissionDate: '' });
       setAssignmentFile(null);
       setDynamicFontSize(19);
       localStorage.removeItem('diu_cover_gen_data');
@@ -69,22 +59,13 @@ function App() {
     const requiredFields = Object.keys(formData);
     const emptyFields = requiredFields.filter(field => !formData[field].trim());
     if (emptyFields.length > 0) { alert("Please fill in all fields."); return; }
-    
     setIsGenerating(true);
     const element = printRef.current;
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
-
-    const opt = {
-      margin: 0,
-      filename: `temp_cover.pdf`,
-      image: { type: 'jpeg', quality: 1.0 },
-      html2canvas: { scale: 4, useCORS: true, backgroundColor: '#ffffff', y: isMobile ? 1 : 0 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: false }
-    };
+    const opt = { margin: 0, filename: `temp_cover.pdf`, image: { type: 'jpeg', quality: 1.0 }, html2canvas: { scale: 4, useCORS: true, backgroundColor: '#ffffff', y: isMobile ? 1 : 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: false } };
 
     try {
       const coverBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
-
       if (assignmentFile) {
         const coverPdfDoc = await PDFDocument.load(await coverBlob.arrayBuffer());
         const mainPdfDoc = await PDFDocument.load(await assignmentFile.arrayBuffer());
@@ -105,12 +86,7 @@ function App() {
         link.download = `DIU_Cover_${formData.studentId}.pdf`;
         link.click();
       }
-    } catch (error) {
-      console.error(error);
-      alert("Error generating PDF.");
-    } finally {
-      setIsGenerating(false);
-    }
+    } catch (error) { alert("Error generating PDF."); } finally { setIsGenerating(false); }
   };
 
   const currentType = reportTypes.find(t => t.id === formData.type);
@@ -121,7 +97,6 @@ function App() {
       <style>{`
         .sidebar-hide-scroll::-webkit-scrollbar { display: none; }
         .sidebar-hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        
         @media (max-width: 768px) {
           .main-container { flex-direction: column !important; overflow-y: auto !important; }
           .sidebar-container { width: 100% !important; min-width: 100% !important; height: auto !important; overflow: visible !important; }
@@ -129,27 +104,26 @@ function App() {
           .main-container::-webkit-scrollbar { width: 6px; display: block !important; }
           .main-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         }
-
         .input-field { width: 100%; padding: 12px 16px; border-radius: 12px; border: 1px solid #cbd5e1; background-color: #f8fafc; font-size: 14px; outline: none; color: #1e293b; box-sizing: border-box; transition: all 0.2s ease; }
         .input-field:hover, .input-field:focus { border-color: #004184; background-color: #fff; }
-        .input-field:focus { box-shadow: 0 0 0 3px rgba(0, 65, 132, 0.1); }
-        
-        /* HOVER EFFECT FOR WHOLE CARD */
-        .input-card:hover { transform: translateY(-4px); boxShadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #004184 !important; }
-
+        .input-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border-color: #004184 !important; }
         .cat-btn { transition: all 0.2s ease; cursor: pointer; border: none; }
         .cat-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        
         .gen-btn { transition: all 0.3s ease; cursor: pointer; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .gen-btn:hover:not(:disabled) { background-color: #003366 !important; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 65, 132, 0.3) !important; }
         
-        .reset-btn { transition: all 0.2s ease; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
+        /* RESTORED RESET BUTTON HOVER */
+        .reset-btn { transition: all 0.2s ease; cursor: pointer; border: none; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .reset-btn:hover { background-color: #fca5a5 !important; transform: translateY(-2px); }
         
-        .file-upload-label { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 15px; text-align: center; cursor: pointer; transition: all 0.2s; display: block; background: #fff; }
-        .file-upload-label:hover { border-color: #004184; background: #f0f7ff; }
+        .feedback-btn { transition: all 0.2s ease; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #64748b; padding: 10px; borderRadius: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 600; width: 100%; }
+        .feedback-btn:hover { background: #f8fafc; color: #004184; border-color: #004184; transform: translateY(-1px); }
+        .contact-link { display: flex; align-items: center; gap: 8px; color: #64748b; text-decoration: none; transition: color 0.2s; font-size: 13px; font-weight: 500; }
+        .contact-link:hover { color: #004184; }
+        .file-upload-label { transition: all 0.2s; display: block; background: #fff; }
+        .file-upload-label:hover { border-color: #004184 !important; background: #f0f7ff !important; }
       `}</style>
-      
+
       <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '16px 32px', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', zIndex: 50, width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ backgroundColor: '#004184', padding: '10px', borderRadius: '12px', color: 'white' }}><GraduationCap size={24} /></div>
@@ -172,8 +146,8 @@ function App() {
               <input name="studentName" value={formData.studentName} onChange={handleChange} placeholder="Full Student Name *" className="input-field" />
               <input name="studentId" value={formData.studentId} onChange={handleChange} placeholder="Student ID *" className="input-field" />
               <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{width: '50%'}}><input name="batch" value={formData.batch} onChange={handleChange} placeholder="Batch *" className="input-field" /></div>
-                <div style={{width: '50%'}}><input name="section" value={formData.section} onChange={handleChange} placeholder="Section *" className="input-field" /></div>
+                <input name="batch" value={formData.batch} onChange={handleChange} placeholder="Batch *" className="input-field" style={{width: '50%'}} />
+                <input name="section" value={formData.section} onChange={handleChange} placeholder="Section *" className="input-field" style={{width: '50%'}} />
               </div>
             </div>
           </div>
@@ -183,8 +157,8 @@ function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input name="semester" value={formData.semester} onChange={handleChange} placeholder="Semester (e.g. Fall 2025) *" className="input-field" />
               <div style={{ display: 'flex', gap: '12px' }}>
-                <div style={{width: '40%'}}><input name="courseCode" value={formData.courseCode} onChange={handleChange} placeholder="Course Code *" className="input-field" /></div>
-                <div style={{width: '60%'}}><input name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Course Title *" className="input-field" /></div>
+                <input name="courseCode" value={formData.courseCode} onChange={handleChange} placeholder="Code *" className="input-field" style={{width: '30%'}} />
+                <input name="courseName" value={formData.courseName} onChange={handleChange} placeholder="Course Title *" className="input-field" style={{width: '70%'}} />
               </div>
             </div>
           </div>
@@ -194,42 +168,54 @@ function App() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <input name="teacherName" value={formData.teacherName} onChange={handleChange} placeholder="Course Teacher Name *" className="input-field" />
               <input name="designation" value={formData.designation} onChange={handleChange} placeholder="Designation *" className="input-field" />
-              <input type="text" name="submissionDate" value={formData.submissionDate} onChange={handleChange} placeholder="Submission Date (e.g. 21st Aug, 2025) *" className="input-field" />
+              <input name="submissionDate" value={formData.submissionDate} onChange={handleChange} placeholder="Submission Date *" className="input-field" />
             </div>
           </div>
 
           <div className="input-card" style={cardStyle}>
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#39b54a', fontWeight: 'bold', fontSize: '12px', marginBottom: '16px', textTransform: 'uppercase' }}><FilePlus size={16} /> Merge Assignment (Optional)</div>
              <input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
-             <label htmlFor="assignment-upload" className="file-upload-label">
-                {assignmentFile ? <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name} Selected</div> : <div style={{ color: '#64748b' }}>Click to upload assignment PDF to merge</div>}
+             <label htmlFor="assignment-upload" className="file-upload-label" style={{ border: '2px dashed #004184', borderRadius: '16px', padding: '20px', textAlign: 'center', cursor: 'pointer', display: 'block' }}>
+                {assignmentFile ? <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name} Selected</div> : <div style={{ color: '#64748b', fontSize: '14px' }}>Click to upload assignment PDF to merge</div>}
              </label>
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '40px' }}>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
             <button onClick={generatePDF} disabled={isGenerating} className="gen-btn" style={{ flex: 3, backgroundColor: isGenerating ? '#64748b' : '#004184', color: 'white', padding: '16px', borderRadius: '16px', fontSize: '15px', boxShadow: '0 20px 25px -5px rgba(0, 65, 132, 0.2)' }}>
-              {isGenerating ? <><Loader2 size={20} className="animate-spin" /> Processing...</> : <>{assignmentFile ? <><FileCheck size={18} /> Merge & Download</> : <><Download size={18} /> Generate PDF</>}</>}
+              {isGenerating ? <><Loader2 size={20} className="animate-spin" /> Processing...</> : <><Download size={18} /> {assignmentFile ? 'Merge & Download' : 'Generate PDF'}</>}
             </button>
-            <button onClick={handleReset} className="reset-btn" style={{ flex: 1, backgroundColor: '#fecaca', color: '#991b1b', padding: '16px', borderRadius: '16px', fontSize: '14px' }}><RefreshCcw size={16} /> Reset</button>
+            <button onClick={handleReset} className="reset-btn" style={{ flex: 1, backgroundColor: '#fecaca', color: '#991b1b', padding: '16px', borderRadius: '16px' }}>
+              <RefreshCcw size={18} /> Reset
+            </button>
           </div>
 
-          <div style={{ marginTop: 'auto', textAlign: 'center', padding: '20px 0', borderTop: '1px solid #e2e8f0', color: '#94a3b8', fontSize: '12px', fontWeight: 'bold' }}>© 2026 Md Nadim Mahmud. All rights reserved.</div>
+          <div style={{ marginTop: 'auto', borderTop: '1px solid #e2e8f0', paddingTop: '24px' }}>
+            <button className="feedback-btn" onClick={() => setIsFeedbackOpen(true)} style={{ marginBottom: '16px' }}>
+              <MessageSquare size={16} /> Feedback or Report Issue
+            </button>
+            <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Connect me</div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '16px', marginBottom: '20px' }}>
+              <a href="mailto:nadimmahmud036@gmail.com" className="contact-link"><Mail size={16} /> Gmail</a>
+              <a href="https://www.linkedin.com/in/nadimmahmudofficial/" target="_blank" rel="noreferrer" className="contact-link"><Linkedin size={16} /> LinkedIn</a>
+            </div>
+            <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: '11px', fontWeight: 'bold' }}>© 2026 Md Nadim Mahmud. All rights reserved.</div>
+          </div>
         </div>
 
         <div className="preview-panel" style={{ flex: 1, backgroundColor: '#cbd5e1', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto' }}>
           <div style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: '10px 20px', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
             <ZoomIn size={18} color="#004184" />
-            <input type="range" min="0.3" max="1.5" step="0.05" value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} style={{ cursor: 'pointer', width: '150px' }} />
+            <input type="range" min="0.3" max="1.5" step="0.05" value={zoom} onChange={(e) => setZoom(parseFloat(e.target.value))} style={{ width: '150px' }} />
             <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{Math.round(zoom * 100)}%</span>
           </div>
 
-          <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', transition: 'transform 0.1s ease-out' }}>
+          <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
             <div ref={printRef} style={{ width: '210mm', height: '296.8mm', padding: '20mm', backgroundColor: '#ffffff', color: '#000000', fontFamily: "'Times New Roman', serif", display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}><img src="/diu-logo.png" alt="DIU" style={{ width: '160px', height: 'auto' }} /></div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}><img src="/diu-logo.png" alt="DIU" style={{ width: '160px' }} /></div>
               <h1 style={{ textAlign: 'center', fontSize: '24px', fontWeight: 'bold', marginBottom: '25px', color: '#000000' }}>{currentType.name}</h1>
               <table style={{ width: '100%', borderCollapse: 'collapse', border: '2.3px solid black', fontSize: '11px', marginBottom: '35px', color: '#000000' }}>
                 <thead>
-                  <tr><th colSpan="7" style={{ border: '2.3px solid black', textAlign: 'center', fontWeight: 'bold', fontSize: '12px' }}>ONLY FOR COURSE TEACHER</th></tr>
+                  <tr><th colSpan="7" style={{ border: '2.3px solid black', textAlign: 'center', fontWeight: 'bold', fontSize: '12px', padding: '5px' }}>ONLY FOR COURSE TEACHER</th></tr>
                   <tr style={{ textAlign: 'center' }}><th style={{ border: '2.3px solid black', width: '35%' }}></th><th style={{ border: '2.3px solid black' }}>Needs Improvement</th><th style={{ border: '2.3px solid black' }}>Developing</th><th style={{ border: '2.3px solid black' }}>Sufficient</th><th style={{ border: '2.3px solid black' }}>Above Average</th><th style={{ border: '2.3px solid black', width: '60px' }}>Total Mark</th></tr>
                   <tr style={{ height: '30px' }}><th style={{ border: '2.3px solid black', textAlign: 'left', paddingLeft: '8px', fontWeight: 'bold' }}>ALLOCATE MARK & PERCENTAGE</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>25%</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>50%</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>75%</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>100%</th><th style={{ border: '2.3px solid black', textAlign: 'center' }}>{currentType.total}</th></tr>
                 </thead>
@@ -241,7 +227,6 @@ function App() {
                   <tr style={{ height: '55px' }}><td style={{ border: '2.3px solid black', padding: '8px', fontWeight: 'bold', verticalAlign: 'top' }}>COMMENTS</td><td colSpan="5" style={{ border: '2.3px solid black' }}></td></tr>
                 </tbody>
               </table>
-
               <div ref={infoSectionRef} style={{ width: '100%', fontSize: `${dynamicFontSize}px`, lineHeight: '1.8', fontWeight: 'bold', paddingLeft: '10px', color: '#000000' }}>
                 <p style={{ fontSize: `${dynamicFontSize + 3}px`, marginBottom: '5px' }}>Semester: {formData.semester || '..........'}</p>
                 <p>Student Name: {formData.studentName || '..........................................................'}</p>
@@ -254,6 +239,21 @@ function App() {
           </div>
         </div>
       </div>
+
+      {isFeedbackOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: 'white', width: '90%', maxWidth: '500px', borderRadius: '24px', padding: '32px', position: 'relative' }}>
+            <button onClick={() => setIsFeedbackOpen(false)} style={{ position: 'absolute', top: '20px', right: '20px', border: 'none', background: 'none', cursor: 'pointer' }}><X /></button>
+            <h2 style={{ color: '#004184', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}><MessageSquare /> Feedback & Support</h2>
+            <form action="https://formspree.io/f/nadimmahmud036@gmail.com" method="POST" style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
+              <input type="text" name="name" placeholder="Your Name (Optional)" className="input-field" />
+              <select name="subject" required className="input-field"><option value="">Select Subject *</option><option value="Bug Report">Report a Bug</option><option value="Feature Suggestion">Feature Suggestion</option><option value="General Feedback">General Feedback</option></select>
+              <textarea name="description" required placeholder="Description... *" className="input-field" style={{ minHeight: '120px' }}></textarea>
+              <button type="submit" className="gen-btn" style={{ backgroundColor: '#39b54a', color: 'white', padding: '14px', borderRadius: '12px' }}><Send size={18} /> Send Feedback</button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
