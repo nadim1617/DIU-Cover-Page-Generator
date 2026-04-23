@@ -23,6 +23,7 @@ function App() {
   const [imageFiles, setImageFiles] = useState([]);
   const [autoEnhance, setAutoEnhance] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState(null);
+  const [pdfFormat, setPdfFormat] = useState('a4');
 
   const [formData, setFormData] = useState(() => {
     const savedData = localStorage.getItem('diu_cover_gen_data');
@@ -81,6 +82,7 @@ function App() {
       setAssignmentFile(null);
       setImageFiles([]);
       setDynamicFontSize(19);
+      setPdfFormat('a4');
       localStorage.removeItem('diu_cover_gen_data');
     }
   };
@@ -108,9 +110,33 @@ function App() {
       mergedPdf.addPage(coverPage);
 
       if (mergeMode === 'pdf' && assignmentFile) {
-        const mainPdfDoc = await PDFDocument.load(await assignmentFile.arrayBuffer());
-        const mainPages = await mergedPdf.copyPages(mainPdfDoc, mainPdfDoc.getPageIndices());
-        mainPages.forEach((page) => mergedPdf.addPage(page));
+        const assignmentBuffer = await assignmentFile.arrayBuffer();
+        const mainPdfDoc = await PDFDocument.load(assignmentBuffer);
+        
+        if (pdfFormat === 'a4') {
+          const pageIndices = mainPdfDoc.getPageIndices();
+          const embeddedPages = await mergedPdf.embedPdf(assignmentBuffer, pageIndices);
+          
+          embeddedPages.forEach((embeddedPage) => {
+            const page = mergedPdf.addPage([595.28, 841.89]); 
+            const scaleX = 555 / embeddedPage.width;
+            const scaleY = 801 / embeddedPage.height;
+            const scale = Math.min(scaleX, scaleY);
+            
+            const scaledWidth = embeddedPage.width * scale;
+            const scaledHeight = embeddedPage.height * scale;
+
+            page.drawPage(embeddedPage, {
+              x: 595.28 / 2 - scaledWidth / 2,
+              y: 841.89 / 2 - scaledHeight / 2,
+              width: scaledWidth,
+              height: scaledHeight,
+            });
+          });
+        } else {
+          const mainPages = await mergedPdf.copyPages(mainPdfDoc, mainPdfDoc.getPageIndices());
+          mainPages.forEach((page) => mergedPdf.addPage(page));
+        }
       } 
       else if (mergeMode === 'images') {
         for (const imgObj of imageFiles) {
@@ -211,10 +237,18 @@ function App() {
             </div>
 
             {mergeMode === 'pdf' ? (
-                <>
-                <input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
-                <label htmlFor="assignment-upload" className="file-upload-label" style={{ border: '2px dashed #004184', borderRadius: '16px', padding: '20px', textAlign: 'center', cursor: 'pointer', display: 'block' }}>{assignmentFile ? <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name}</div> : <div style={{ color: '#64748b', fontSize: '13px' }}>Upload assignment PDF</div>}</label>
-                </>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <input type="file" id="assignment-upload" accept=".pdf" onChange={handleFileChange} style={{ display: 'none' }} />
+                    <label htmlFor="assignment-upload" className="file-upload-label" style={{ border: '2px dashed #004184', borderRadius: '16px', padding: '20px', textAlign: 'center', cursor: 'pointer', display: 'block' }}>{assignmentFile ? <div style={{ color: '#39b54a', fontWeight: 'bold' }}><FileCheck size={20} style={{ margin: '0 auto 5px' }} /> {assignmentFile.name}</div> : <div style={{ color: '#64748b', fontSize: '13px' }}>Upload assignment PDF</div>}</label>
+                    {assignmentFile && (
+                        <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input type="checkbox" checked={pdfFormat === 'a4'} onChange={(e) => setPdfFormat(e.target.checked ? 'a4' : 'original')} style={{ accentColor: '#004184' }} />
+                                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#004184' }}>Convert to A4 Size Canvas</span>
+                            </label>
+                        </div>
+                    )}
+                </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <input type="file" id="image-upload" accept="image/*" multiple onChange={handleImageChange} style={{ display: 'none' }} />
